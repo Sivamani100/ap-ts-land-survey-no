@@ -19,18 +19,18 @@ export function animateToRegion(_ref: unknown, _region: unknown) {}
 // Bhuvan AP cadastral survey layer — TMS format (y from bottom, so tms:true in Leaflet)
 // Source: NRSC Bhuvan platform (bhuvan-app1.nrsc.gov.in/bhuvan2d2.0/)
 const BHUVAN_AP_CAD =
-  "https://bhuvan-vec1.nrsc.gov.in/bhuvan/gwc/service/tms/1.0.0/cadastral%3AAP_Cad@EPSG%3A900913@png/{z}/{x}/{y}.png";
+  "https://bhuvan-vec1.nrsc.gov.in/bhuvan/gwc/service/tms/1.0.0/cadastral:AP_Cad@EPSG:900913@png/{z}/{x}/{y}.png";
 
 // Bhuvan TG cadastral survey layer — TMS format
 const BHUVAN_TG_CAD =
-  "https://bhuvan-vec1.nrsc.gov.in/bhuvan/gwc/service/tms/1.0.0/cadastral%3ATG_Cad@EPSG%3A900913@png/{z}/{x}/{y}.png";
+  "https://bhuvan-vec1.nrsc.gov.in/bhuvan/gwc/service/tms/1.0.0/cadastral:TG_Cad@EPSG:900913@png/{z}/{x}/{y}.png";
 
 const TILE_LAYERS = {
-  standard: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  standard: "https://tile.openstreetmap.de/{z}/{x}/{y}.png",
   satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
   terrain: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
   dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-  lines: "",
+  lines: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
 };
 
 function loadLeaflet(): Promise<any> {
@@ -238,26 +238,26 @@ export function LandMap({ mapRef }: LandMapProps) {
       }
     }
 
-    if (mapType !== "lines") {
-      const L = (window as any).L;
-      if (L) {
-        const url = TILE_LAYERS[mapType];
-        const options: any = { maxZoom: 19 };
-        if (mapType === "satellite") {
-          options.attribution = "Esri World Imagery";
-        } else if (mapType === "terrain") {
-          options.attribution = "OpenTopoMap";
-          options.maxZoom = 17;
-        } else if (mapType === "dark") {
-          options.attribution = "CartoDB Dark Matter";
-        } else {
-          options.attribution = "OpenStreetMap";
-        }
-
-        const baseLayer = L.tileLayer(url, options);
-        baseLayer.addTo(map);
-        activeBaseLayerRef.current = baseLayer;
+    const L = (window as any).L;
+    if (L) {
+      const url = TILE_LAYERS[mapType];
+      const options: any = { maxZoom: 19 };
+      if (mapType === "satellite") {
+        options.attribution = "Esri World Imagery";
+      } else if (mapType === "terrain") {
+        options.attribution = "OpenTopoMap";
+        options.maxZoom = 17;
+      } else if (mapType === "dark") {
+        options.attribution = "CartoDB Dark Matter";
+      } else if (mapType === "lines") {
+        options.attribution = "CartoDB Positron";
+      } else {
+        options.attribution = "OpenStreetMap";
       }
+
+      const baseLayer = L.tileLayer(url, options);
+      baseLayer.addTo(map);
+      activeBaseLayerRef.current = baseLayer;
     }
   }, [mapType, mapLoaded]);
 
@@ -792,7 +792,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 0.5,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 0.5,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -983,7 +983,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    borderRadius: 10,
+    borderRadius: 8,
     paddingVertical: 10,
   },
   rulerBtnText: {

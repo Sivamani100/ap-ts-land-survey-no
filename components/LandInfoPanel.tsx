@@ -113,7 +113,7 @@ export function LandInfoPanel() {
   };
 
   const handleMeeBhoomi = async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const isTG = record?.state?.toLowerCase() === "telangana";
     const url = isTG
       ? "https://dharani.telangana.gov.in"
@@ -121,8 +121,17 @@ export function LandInfoPanel() {
     if (Platform.OS === "web") {
       window.open(url, "_blank", "noopener,noreferrer");
     } else {
-      setBrowserUrl(url);
-      setBrowserVisible(true);
+      try {
+        await WebBrowser.openBrowserAsync(url, {
+          presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+          toolbarColor: "#0D5F4E",
+          controlsColor: "#ffffff",
+        });
+      } catch (err) {
+        console.error("Failed to open WebBrowser:", err);
+        setBrowserUrl(url);
+        setBrowserVisible(true);
+      }
     }
   };
 
@@ -602,7 +611,8 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     gap: 8,
-    margin: 12,
+    marginHorizontal: 12,
+    marginBottom: 12,
     marginTop: 4,
   },
   meebhoomiBtn: {
@@ -611,15 +621,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 7,
     borderRadius: 12,
-    paddingVertical: 13,
+    height: 48,
   },
   saveBtn: {
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    borderWidth: StyleSheet.hairlineWidth,
+    width: 48,
+    height: 48,
+    borderWidth: 0.5,
   },
   actionBtnText: {
     color: "#fff",

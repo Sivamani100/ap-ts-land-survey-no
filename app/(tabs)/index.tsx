@@ -41,8 +41,15 @@ export default function MapScreen() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GeocodeResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedVillageName, setSelectedVillageName] = useState("");
 
-  const topPad = Platform.OS === "web" ? 20 : insets.top;
+  const topPad = Platform.OS === "web"
+    ? 20
+    : insets.top > 0
+    ? insets.top
+    : Platform.OS === "ios"
+    ? 44
+    : 36;
 
   const handleSearchChange = async (text: string) => {
     setQuery(text);
@@ -62,6 +69,7 @@ export default function MapScreen() {
   };
 
   const handleSelectVillage = async (village: GeocodeResult) => {
+    setSelectedVillageName(village.name);
     setQuery("");
     setResults([]);
     setIsVillageView(true);
@@ -73,6 +81,7 @@ export default function MapScreen() {
 
   const handleExitVillageView = async () => {
     setIsVillageView(false);
+    setSelectedVillageName("");
     clearPin();
     setMapType("standard");
     setQuery("");
@@ -98,7 +107,7 @@ export default function MapScreen() {
           <View style={styles.villageHeaderRow}>
             <Ionicons name="map" size={16} color={colors.primary} />
             <Text style={[styles.villageTitle, { color: colors.foreground }]} numberOfLines={1}>
-              Survey Lines Active
+              {selectedVillageName || "Survey Lines Active"}
             </Text>
             <Pressable onPress={handleExitVillageView} style={styles.exitBtn} hitSlop={8}>
               <Ionicons name="close-circle" size={18} color={colors.destructive} />

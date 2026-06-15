@@ -99,7 +99,13 @@ export default function HistoryScreen() {
     );
   };
 
-  const topPad = Platform.OS === "web" ? 20 : insets.top;
+  const topPad = Platform.OS === "web"
+    ? 20
+    : insets.top > 0
+    ? insets.top
+    : Platform.OS === "ios"
+    ? 44
+    : 36;
   const bottomPad = Platform.OS === "web" ? 34 + 75 : insets.bottom + 75;
 
   if (selected) {

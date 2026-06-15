@@ -3,20 +3,21 @@ import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import * as Location from "expo-location";
 import MapView, { Marker, UrlTile, Polyline, Polygon } from "react-native-maps";
 import { useLand } from "@/context/LandContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
 import { Ionicons } from "@expo/vector-icons";
 import { calculatePathLength, calculatePolygonArea, convertSqMeters, Coordinate } from "@/utils/geometry";
 
-const OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const OSM_TILE_URL = "https://tile.openstreetmap.de/{z}/{x}/{y}.png";
 // Bhuvan AP cadastral survey layer — TMS format (flipY=true)
 // Source: NRSC Bhuvan platform (bhuvan-app1.nrsc.gov.in/bhuvan2d2.0/)
 const BHUVAN_AP_CAD =
-  "https://bhuvan-vec1.nrsc.gov.in/bhuvan/gwc/service/tms/1.0.0/cadastral%3AAP_Cad@EPSG%3A900913@png/{z}/{x}/{y}.png";
+  "https://bhuvan-vec1.nrsc.gov.in/bhuvan/gwc/service/tms/1.0.0/cadastral:AP_Cad@EPSG:900913@png/{z}/{x}/{y}.png";
 
 // Bhuvan TG cadastral survey layer — TMS format
 const BHUVAN_TG_CAD =
-  "https://bhuvan-vec1.nrsc.gov.in/bhuvan/gwc/service/tms/1.0.0/cadastral%3ATG_Cad@EPSG%3A900913@png/{z}/{x}/{y}.png";
+  "https://bhuvan-vec1.nrsc.gov.in/bhuvan/gwc/service/tms/1.0.0/cadastral:TG_Cad@EPSG:900913@png/{z}/{x}/{y}.png";
 
 interface LandMapProps {
   mapRef: React.RefObject<MapView | null>;
@@ -24,6 +25,7 @@ interface LandMapProps {
 
 export function LandMap({ mapRef }: LandMapProps) {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const {
     droppedPin,
     dropPin,
@@ -171,25 +173,30 @@ export function LandMap({ mapRef }: LandMapProps) {
         onRegionChangeComplete={handleRegionChangeComplete}
         onPress={handleMapPress}
         showsUserLocation
-        showsCompass
-        showsScale
-        mapType="none"
+        showsMyLocationButton={false}
+        showsCompass={false}
+        showsScale={false}
+        mapType={
+          mapType === "standard"
+            ? "standard"
+            : mapType === "satellite"
+            ? "satellite"
+            : mapType === "terrain"
+            ? "terrain"
+            : "none"
+        }
         userInterfaceStyle={mapType === "dark" ? "dark" : "light"}
         {...{ showsUserHeading: true } as any}
       >
-        {/* Base Tile Layer */}
-        {mapType !== "lines" && (
+        {/* Base Tile Layer for custom map types */}
+        {(mapType === "dark" || mapType === "lines") && (
           <UrlTile
             urlTemplate={
-              mapType === "satellite"
-                ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                : mapType === "terrain"
-                ? "https://a.tile.opentopomap.org/{z}/{x}/{y}.png"
-                : mapType === "dark"
+              mapType === "dark"
                 ? "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
-                : OSM_TILE_URL
+                : "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
             }
-            maximumZ={mapType === "terrain" ? 17 : 19}
+            maximumZ={19}
             flipY={false}
             tileSize={256}
           />
@@ -263,7 +270,7 @@ export function LandMap({ mapRef }: LandMapProps) {
       </View>
 
       {/* Floating Action Buttons Column */}
-      <View style={styles.floatingContainer}>
+      <View style={[styles.floatingContainer, { top: insets.top + 76 }]}>
         {!isVillageView && (
           <Pressable
             onPress={toggleMenu}
@@ -338,7 +345,7 @@ export function LandMap({ mapRef }: LandMapProps) {
 
       {/* Floating Layer Menu Selector Panel */}
       {!isVillageView && menuOpen && (
-        <View style={styles.menuCardContainer}>
+        <View style={[styles.menuCardContainer, { top: insets.top + 76 }]}>
           <View
             style={[
               styles.menuCard,
@@ -591,7 +598,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 0.5,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -656,7 +663,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 0.5,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -803,7 +810,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    borderRadius: 10,
+    borderRadius: 8,
     paddingVertical: 10,
   },
   rulerBtnText: {

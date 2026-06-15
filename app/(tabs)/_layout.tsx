@@ -49,17 +49,44 @@ function ClassicTabLayout() {
           backgroundColor: isIOS ? "transparent" : colors.background,
           borderTopWidth: isWeb ? 1 : StyleSheet.hairlineWidth,
           borderTopColor: colors.border,
-          elevation: 0,
-          ...(isWeb ? { height: 75 } : {}),
-        },
-        tabBarItemStyle: isWeb
-          ? {
+          elevation: 8,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+          ...Platform.select({
+            ios: {
+              height: 90,
+              paddingBottom: 32,
+            },
+            android: {
+              height: 68,
+              paddingBottom: 12,
+            },
+            web: {
               height: 75,
-              justifyContent: "center",
-              alignItems: "center",
               paddingBottom: 8,
-            }
-          : {},
+            },
+          }),
+          paddingTop: 8,
+        },
+        tabBarItemStyle: Platform.select({
+          web: {
+            height: 75,
+            justifyContent: "center",
+            alignItems: "center",
+            paddingBottom: 8,
+          },
+          android: {
+            height: 52,
+            justifyContent: "center",
+            alignItems: "center",
+          },
+          ios: {
+            height: 50,
+          },
+          default: {},
+        }),
         tabBarBackground: () =>
           isIOS ? (
             <BlurView

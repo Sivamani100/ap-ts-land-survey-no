@@ -55,7 +55,13 @@ export default function SearchScreen() {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
 
-  const topPad = Platform.OS === "web" ? 20 : insets.top;
+  const topPad = Platform.OS === "web"
+    ? 20
+    : insets.top > 0
+    ? insets.top
+    : Platform.OS === "ios"
+    ? 44
+    : 36;
   const bottomPad = Platform.OS === "web" ? 75 + 12 : insets.bottom + 75 + 12;
 
   const handleSearch = async () => {
@@ -136,14 +142,23 @@ export default function SearchScreen() {
 
   const handleOpenPortal = async () => {
     if (!result) return;
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const isTG = result.state?.toLowerCase() === "telangana";
     const url = isTG ? "https://dharani.telangana.gov.in" : "https://meebhoomi.ap.gov.in";
     if (Platform.OS === "web") {
       window.open(url, "_blank", "noopener,noreferrer");
     } else {
-      setPortalUrl(url);
-      setPortalVisible(true);
+      try {
+        await WebBrowser.openBrowserAsync(url, {
+          presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+          toolbarColor: "#0D5F4E",
+          controlsColor: "#ffffff",
+        });
+      } catch (err) {
+        console.error("Failed to open WebBrowser:", err);
+        setPortalUrl(url);
+        setPortalVisible(true);
+      }
     }
   };
 

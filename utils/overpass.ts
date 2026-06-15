@@ -25,6 +25,30 @@ function nameOf(el: OverpassElement): string {
   );
 }
 
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit & { timeout?: number }
+): Promise<Response> {
+  const { timeout = 10000, ...fetchOptions } = options;
+
+  if (typeof AbortSignal !== "undefined" && "timeout" in AbortSignal) {
+    fetchOptions.signal = AbortSignal.timeout(timeout);
+  } else if (typeof AbortController !== "undefined") {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    fetchOptions.signal = controller.signal;
+    try {
+      const response = await fetch(url, fetchOptions);
+      clearTimeout(id);
+      return response;
+    } catch (error) {
+      clearTimeout(id);
+      throw error;
+    }
+  }
+  return fetch(url, fetchOptions);
+}
+
 export async function getAdminHierarchy(
   lat: number,
   lng: number
@@ -35,14 +59,14 @@ is_in(${lat},${lng})->.a;
 rel(pivot.a)[boundary=administrative][admin_level~"^[4-7]$"];
 out tags;`;
 
-  const resp = await fetch(ENDPOINT, {
+  const resp = await fetchWithTimeout(ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       "User-Agent": "APLandApp/1.0",
     },
     body: `data=${encodeURIComponent(query)}`,
-    signal: AbortSignal.timeout(12000),
+    timeout: 12000,
   });
 
   if (!resp.ok) throw new Error(`Overpass error: ${resp.status}`);

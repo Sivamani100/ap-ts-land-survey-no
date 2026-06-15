@@ -7,17 +7,41 @@ export interface NominatimResult {
   lng: number;
 }
 
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit & { timeout?: number }
+): Promise<Response> {
+  const { timeout = 10000, ...fetchOptions } = options;
+
+  if (typeof AbortSignal !== "undefined" && "timeout" in AbortSignal) {
+    fetchOptions.signal = AbortSignal.timeout(timeout);
+  } else if (typeof AbortController !== "undefined") {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    fetchOptions.signal = controller.signal;
+    try {
+      const response = await fetch(url, fetchOptions);
+      clearTimeout(id);
+      return response;
+    } catch (error) {
+      clearTimeout(id);
+      throw error;
+    }
+  }
+  return fetch(url, fetchOptions);
+}
+
 export async function reverseGeocode(
   lat: number,
   lng: number
 ): Promise<NominatimResult> {
   const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&zoom=18&format=json&addressdetails=1&accept-language=en`;
 
-  const resp = await fetch(url, {
+  const resp = await fetchWithTimeout(url, {
     headers: {
       "User-Agent": "APLandApp/1.0 (land records lookup for Andhra Pradesh)",
     },
-    signal: AbortSignal.timeout(10000),
+    timeout: 10000,
   });
 
   if (!resp.ok) throw new Error(`Nominatim error: ${resp.status}`);
@@ -70,7 +94,7 @@ export async function searchVillages(query: string): Promise<GeocodeResult[]> {
   };
 
   try {
-    const resp = await fetch(url, { headers, signal: AbortSignal.timeout(10000) });
+    const resp = await fetchWithTimeout(url, { headers, timeout: 10000 });
     if (!resp.ok) throw new Error(`Nominatim error: ${resp.status}`);
 
     const data = await resp.json();
@@ -85,7 +109,6 @@ export async function searchVillages(query: string): Promise<GeocodeResult[]> {
       // Filter to keep only AP/TG results
       if (!isAP && !isTG) continue;
 
-      const stateCode = isAP ? "AP" : "TG";
       const name =
         addr.village ||
         addr.town ||
@@ -97,7 +120,7 @@ export async function searchVillages(query: string): Promise<GeocodeResult[]> {
       const district = addr.district || addr.county || addr.city || "";
 
       results.push({
-        name: `${name} (${district}, ${stateCode})`,
+        name: district ? `${name}, ${district}` : name,
         lat: parseFloat(item.lat),
         lng: parseFloat(item.lon),
         state: isAP ? "Andhra Pradesh" : "Telangana",
