@@ -155,7 +155,7 @@ export function LandMap({ mapRef }: LandMapProps) {
         html: `<div style="position:relative;width:28px;height:40px;">
           <div style="
             width:26px;height:26px;
-            background:#0D5F4E;
+            background:#1E3E72;
             border:3px solid #fff;
             border-radius:50% 50% 50% 0;
             transform:rotate(-45deg);
@@ -377,7 +377,7 @@ export function LandMap({ mapRef }: LandMapProps) {
       style.id = "ruler-tooltip-style";
       style.innerHTML = `
         .ruler-tooltip {
-          background: #0D5F4E !important;
+          background: #1E3E72 !important;
           color: #fff !important;
           border: none !important;
           border-radius: 4px !important;
@@ -387,7 +387,7 @@ export function LandMap({ mapRef }: LandMapProps) {
           box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;
         }
         .ruler-tooltip::before {
-          border-top-color: #0D5F4E !important;
+          border-top-color: #1E3E72 !important;
         }
       `;
       document.head.appendChild(style);

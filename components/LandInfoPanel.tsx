@@ -124,7 +124,7 @@ export function LandInfoPanel() {
       try {
         await WebBrowser.openBrowserAsync(url, {
           presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
-          toolbarColor: "#0D5F4E",
+          toolbarColor: "#1E3E72",
           controlsColor: "#ffffff",
         });
       } catch (err) {

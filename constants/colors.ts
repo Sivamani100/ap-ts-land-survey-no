@@ -1,7 +1,7 @@
 const colors = {
   light: {
     text: "#1A1A18",
-    tint: "#0D5F4E",
+    tint: "#1E3E72",
 
     background: "#F4F2EE",
     foreground: "#1A1A18",
@@ -9,7 +9,7 @@ const colors = {
     card: "#FFFFFF",
     cardForeground: "#1A1A18",
 
-    primary: "#0D5F4E",
+    primary: "#1E3E72",
     primaryForeground: "#FFFFFF",
 
     secondary: "#E8EDE8",
@@ -34,14 +34,14 @@ const colors = {
     info: "#1E5FA3",
     infoForeground: "#FFFFFF",
 
-    mapOverlay: "rgba(13,95,78,0.92)",
+    mapOverlay: "rgba(30,62,114,0.92)",
     panelBackground: "#FFFFFF",
     skeleton: "#E8E5DF",
   },
 
   dark: {
     text: "#F3F4F6",
-    tint: "#14B8A6",
+    tint: "#3B82F6",
 
     background: "#09090B",
     foreground: "#F3F4F6",
@@ -49,7 +49,7 @@ const colors = {
     card: "#18181B",
     cardForeground: "#F3F4F6",
 
-    primary: "#14B8A6",
+    primary: "#3B82F6",
     primaryForeground: "#09090B",
 
     secondary: "#27272A",
@@ -74,7 +74,7 @@ const colors = {
     info: "#3B82F6",
     infoForeground: "#FFFFFF",
 
-    mapOverlay: "rgba(20,184,166,0.92)",
+    mapOverlay: "rgba(59,130,246,0.92)",
     panelBackground: "#18181B",
     skeleton: "#27272A",
   },

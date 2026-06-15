@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "AP Land",
+    "name": "AP & TS Survey No Finder",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,17 +11,21 @@
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "cover",
-      "backgroundColor": "#0D5F4E"
+      "backgroundColor": "#1E3E72"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "CFBundleDisplayName": "AP & TS Survey No Finder"
+      }
     },
     "android": {
       "package": "com.aptslandrecords.mobile",
-      "backgroundColor": "#0D5F4E"
+      "backgroundColor": "#1E3E72"
     },
     "web": {
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/icon.png",
+      "name": "AP & TS Survey No Finder"
     },
     "plugins": [
       [
@@ -40,7 +44,11 @@
     "extra": {
       "router": {
         "origin": "https://replit.com/"
+      },
+      "eas": {
+        "projectId": "bca7a66e-8f7e-4d3d-a4ad-7216c10d88d2"
       }
-    }
+    },
+    "owner": "siva92"
   }
 }

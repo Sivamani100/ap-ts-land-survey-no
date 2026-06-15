@@ -230,7 +230,7 @@ export function LandMap({ mapRef }: LandMapProps) {
               latitude: droppedPin.lat,
               longitude: droppedPin.lng,
             }}
-            pinColor="#0D5F4E"
+            pinColor="#1E3E72"
           />
         )}
 
