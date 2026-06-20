@@ -2,12 +2,12 @@
   "expo": {
     "name": "AP & TS Survey No Finder",
     "slug": "mobile",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mobile",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "cover",
@@ -21,7 +21,18 @@
     },
     "android": {
       "package": "com.aptslandrecords.mobile",
-      "backgroundColor": "#1E3E72"
+      "versionCode": 4,
+      "backgroundColor": "#1E3E72",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "INTERNET",
+        "VIBRATE"
+      ]
     },
     "web": {
       "favicon": "./assets/images/icon.png",

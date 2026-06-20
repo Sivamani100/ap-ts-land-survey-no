@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - AP & TS Survey No Finder</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      color: #1e3e72;
+      border-bottom: 2px solid #1e3e72;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #2c3e50;
+      margin-top: 30px;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    .highlight-box {
+      background-color: #eef4fc;
+      border-left: 4px solid #1e3e72;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .warning-box {
+      background-color: #fffbeb;
+      border-left: 4px solid #d97706;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    footer {
+      margin-top: 50px;
+      font-size: 0.9em;
+      color: #777;
+      text-align: center;
+      border-top: 1px solid #ddd;
+      padding-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Privacy Policy</h1>
+  <p><strong>Effective Date:</strong> June 18, 2026</p>
+
+  <p>
+    This Privacy Policy describes how <strong>AP & TS Survey No Finder</strong> (referred to as "we", "us", or "our") handles user information. We are committed to protecting your privacy and ensuring transparency in how data is processed by our application.
+  </p>
+
+  <div class="highlight-box">
+    <strong>Core Privacy Commitment:</strong>
+    <ul>
+      <li><strong>No Personal Data Collection:</strong> We do not collect, request, or store any personal identifier (such as names, email addresses, phone numbers, contacts, or device IDs).</li>
+      <li><strong>No Account Creation / No Login:</strong> You can use all features of the application without registering an account or logging in.</li>
+      <li><strong>No Advertising ID:</strong> The application does not collect or use Google's Advertising ID.</li>
+      <li><strong>No Analytics:</strong> We do not integrate any analytics or tracking SDKs (such as Firebase Analytics, Mixpanel, or Google Analytics).</li>
+      <li><strong>No Remote User Database:</strong> We do not maintain any external or cloud-based database of users or their histories. All saved survey logs are stored locally on your device.</li>
+    </ul>
+  </div>
+
+  <h2>1. Location Data Usage</h2>
+  <p>
+    The application requests access to your device's location services (both <strong>Approximate Location</strong> and <strong>Precise Location</strong>) via the Android operating system.
+  </p>
+  <ul>
+    <li><strong>Why location is accessed:</strong> Your location is accessed in real-time solely to display your position as a blue dot on the map, show your orientation heading cone, and enable distance measurements using the measurement ruler.</li>
+    <li><strong>Optional Access:</strong> Location permissions are completely optional. If you decline location permissions, you can still use the app by manually inputting coordinates or using the geosearch village lookup feature.</li>
+    <li><strong>No Storage:</strong> Your active location coordinate values are not saved or logged anywhere on the device or on any server.</li>
+  </ul>
+
+  <h2>2. Transmission of Data to Third-Party Services</h2>
+  <p>
+    The application does not run a backend server. To load maps, perform coordinates-to-address translations, retrieve administrative boundaries, and fetch weather details, the app sends location coordinate queries directly from your device to the following third-party APIs:
+  </p>
+  <ul>
+    <li>
+      <strong>Bhuvan WMS & TMS APIs (NRSC/ISRO):</strong> 
+      To retrieve land cadastral survey overlays and identify specific parcel survey numbers, coordinates are sent to ISRO's Bhuvan servers (<code>https://bhuvan-app1.nrsc.gov.in</code> and <code>https://bhuvan-vec1.nrsc.gov.in</code>). 
+      This is a secure connection (HTTPS) and does not transmit any user-identifying data.
+    </li>
+    <li>
+      <strong>OpenStreetMap / Nominatim API:</strong> 
+      Coordinates are sent to Nominatim (<code>https://nominatim.openstreetmap.org</code>) to translate coordinates into readable village or hamlet names (reverse geocoding) and to perform geosearch queries.
+    </li>
+    <li>
+      <strong>Overpass API:</strong> 
+      Coordinates are sent to Overpass API (<code>https://overpass-api.de</code>) to look up hierarchical administrative boundaries (state, district, mandal, village) using open-access OpenStreetMap boundary relations.
+    </li>
+    <li>
+      <strong>Open-Meteo API:</strong> 
+      Coordinates are sent to Open-Meteo (<code>https://api.open-meteo.com</code>) to retrieve elevation above sea level and agricultural weather parameters.
+    </li>
+  </ul>
+  <p>
+    All network traffic is encrypted using HTTPS. These third-party services receive only the coordinate values (latitude/longitude) and standard client headers necessary to complete the requests. They do not receive any user profiles or persistent device identifiers.
+  </p>
+
+  <h2>3. Local Storage</h2>
+  <p>
+    When you save survey logs, coordinates, custom notes, or custom titles, they are stored directly on your device's local memory using React Native's sandboxed <code>AsyncStorage</code>. 
+  </p>
+  <ul>
+    <li>We have no access to your saved records.</li>
+    <li>You can clear all saved logs instantly by going to <strong>Settings &rarr; Data & Backup &rarr; Clear Saved History</strong>.</li>
+  </ul>
+
+  <div class="warning-box">
+    <strong>Government Non-Affiliation Disclaimer:</strong><br>
+    This application is an independent tool and does not represent or have authorization from any government organization. While it overlays spatial data from the public Bhuvan platform, official ownership details and certified land certificates must be obtained directly through the official state government portals (AP MeeBhoomi: meebhoomi.ap.gov.in and Telangana Dharani: dharani.telangana.gov.in).
+  </div>
+
+  <h2>4. Changes to This Privacy Policy</h2>
+  <p>
+    We may update our Privacy Policy from time to time. Any changes will be posted on this page with an updated effective date. We encourage you to review this page periodically for any modifications.
+  </p>
+
+  <h2>5. Contact Us</h2>
+  <p>
+    If you have any questions or feedback regarding this Privacy Policy or our data handling practices, you can contact support at:
+  </p>
+  <p><strong>Email:</strong> support@aptslandrecords.mobile</p>
+
+  <footer>
+    <p>&copy; 2026 AP & TS Survey No Finder. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

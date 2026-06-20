@@ -350,7 +350,7 @@ export default function SearchScreen() {
               <View style={styles.meebhoomiTop}>
                 <Ionicons name="information-circle-outline" size={14} color={colors.accent} style={{ marginTop: 1 }} />
                 <Text style={[styles.meebhoomiNote, { color: colors.mutedForeground }]}>
-                  Survey no. &amp; owner details require {result.state?.toLowerCase() === "telangana" ? "Dharani" : "MeeBhoomi"} portal {result.state?.toLowerCase() === "telangana" ? "" : "(OTP login required)"}
+                  Survey no. &amp; owner details require {result.state?.toLowerCase() === "telangana" ? "Dharani" : "MeeBhoomi"} portal {result.state?.toLowerCase() === "telangana" ? "" : "(OTP login required)"}. Please verify all records through official government portals.
                 </Text>
               </View>
               <Pressable

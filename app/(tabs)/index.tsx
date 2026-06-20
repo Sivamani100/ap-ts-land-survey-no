@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   View,
+  Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
@@ -20,11 +21,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { searchVillages } from "@/utils/nominatim";
 import type { GeocodeResult } from "@/utils/nominatim";
 import * as Haptics from "expo-haptics";
+import { useRouter } from "expo-router";
 
 export default function MapScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const {
+    status,
     dropPin,
     clearPin,
     mapType,
@@ -91,6 +95,25 @@ export default function MapScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LandMap mapRef={Platform.OS === "web" ? mapRef : nativeMapRef} />
+
+      {/* Floating Info / Disclaimer Button */}
+      <Pressable
+        onPress={async () => {
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push("/disclaimer" as any);
+        }}
+        style={[
+          styles.floatingInfoBtn,
+          {
+            top: topPad + 72,
+            right: 14,
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
+      </Pressable>
 
       {/* Top Search Bar */}
       <View
@@ -225,6 +248,29 @@ export default function MapScreen() {
         </View>
       )}
 
+      {status === "idle" && (
+        <View
+          style={[
+            styles.footerDisclaimer,
+            {
+              backgroundColor: colors.card + "E6",
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
+            Data Source: <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>Bhuvan (NRSC/ISRO)</Text> (
+            <Text
+              style={[styles.footerLink, { color: colors.primary }]}
+              onPress={() => Linking.openURL("https://bhuvan.nrsc.gov.in").catch((e) => console.log(e))}
+            >
+              https://bhuvan.nrsc.gov.in
+            </Text>
+            ) · This app is not affiliated with any Government entity.
+          </Text>
+        </View>
+      )}
+
       <LandInfoPanel />
     </View>
   );
@@ -346,5 +392,47 @@ const styles = StyleSheet.create({
   optLabel: {
     fontSize: 9,
     textAlign: "center",
+  },
+  floatingInfoBtn: {
+    position: "absolute",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+    zIndex: 999,
+  },
+  footerDisclaimer: {
+    position: "absolute",
+    bottom: 85,
+    left: 14,
+    right: 14,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 998,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  footerText: {
+    fontSize: 10.5,
+    fontFamily: "Inter_500Medium",
+    textAlign: "center",
+    lineHeight: 15,
+  },
+  footerLink: {
+    textDecorationLine: "underline",
   },
 });

@@ -9,21 +9,26 @@ import {
   Text,
   TextInput,
   View,
+  Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
+import * as WebBrowser from "expo-web-browser";
+import Constants from "expo-constants";
 import { useColors } from "@/hooks/useColors";
 import { useLand } from "@/context/LandContext";
 import { clearHistory, getHistory } from "@/utils/storage";
 import { toSqMeters, convertSqMeters } from "@/utils/geometry";
+import { useRouter } from "expo-router";
 
 type SubPage = "main" | "location" | "theme" | "opacity" | "format" | "data" | "converter";
 
 export default function SettingsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const {
     theme,
     setTheme,
@@ -254,10 +259,114 @@ export default function SettingsScreen() {
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
               </Pressable>
+
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+              {/* Data Sources */}
+              <Pressable
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push("/sources" as any);
+                }}
+                style={styles.row}
+              >
+                <View style={styles.rowLeft}>
+                  <Ionicons name="git-branch-outline" size={18} color={colors.primary} />
+                  <View style={styles.rowTextContainer}>
+                    <Text style={[styles.label, { color: colors.foreground }]}>Official Data Sources</Text>
+                    <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+                      List of government portals and mapping services used
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+              </Pressable>
+
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+              {/* About & Disclaimer */}
+              <Pressable
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push("/disclaimer" as any);
+                }}
+                style={styles.row}
+              >
+                <View style={styles.rowLeft}>
+                  <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
+                  <View style={styles.rowTextContainer}>
+                    <Text style={[styles.label, { color: colors.foreground }]}>About &amp; Disclaimer</Text>
+                    <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+                      Government disclaimer and official data sources
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+              </Pressable>
+
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+              {/* Privacy Policy */}
+              <Pressable
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  const privacyUrl = "https://sivamani100.github.io/ap-ts-land-survey-no/privacy.html";
+                  try {
+                    await WebBrowser.openBrowserAsync(privacyUrl, {
+                      presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+                      toolbarColor: colors.primary,
+                      controlsColor: colors.primaryForeground || "#ffffff",
+                    });
+                  } catch (err) {
+                    console.error("Failed to open Privacy Policy:", err);
+                    Linking.openURL(privacyUrl).catch((e) => console.error(e));
+                  }
+                }}
+                style={styles.row}
+              >
+                <View style={styles.rowLeft}>
+                  <Ionicons name="shield-checkmark-outline" size={18} color={colors.primary} />
+                  <View style={styles.rowTextContainer}>
+                    <Text style={[styles.label, { color: colors.foreground }]}>Privacy Policy</Text>
+                    <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+                      View location data collection and sharing policy
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+              </Pressable>
+
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+              {/* Contact Support */}
+              <Pressable
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  const mailUrl = "mailto:support@aptslandrecords.mobile?subject=AP%20TS%20Land%20Survey%20Finder%20Support";
+                  Linking.openURL(mailUrl).catch((err) => {
+                    Alert.alert(
+                      "Contact Support",
+                      "Email: support@aptslandrecords.mobile\n\nPlease email us for any assistance."
+                    );
+                  });
+                }}
+                style={styles.row}
+              >
+                <View style={styles.rowLeft}>
+                  <Ionicons name="mail-outline" size={18} color={colors.primary} />
+                  <View style={styles.rowTextContainer}>
+                    <Text style={[styles.label, { color: colors.foreground }]}>Contact Support</Text>
+                    <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+                      Get email support for the application
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+              </Pressable>
             </View>
 
             <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
-              Land Records Cadastral Map v1.2.0 · NRSC Bhuvan API
+              Land Records Cadastral Map v{Constants.expoConfig?.version ?? "1.0.3"} · NRSC Bhuvan API
             </Text>
           </>
         )}

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import * as Location from "expo-location";
-import MapView, { Marker, UrlTile, Polyline, Polygon } from "react-native-maps";
+import { WebView } from "react-native-webview";
 import { useLand } from "@/context/LandContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
@@ -9,18 +9,20 @@ import { useColors } from "@/hooks/useColors";
 import { Ionicons } from "@expo/vector-icons";
 import { calculatePathLength, calculatePolygonArea, convertSqMeters, Coordinate } from "@/utils/geometry";
 
-const OSM_TILE_URL = "https://tile.openstreetmap.de/{z}/{x}/{y}.png";
-// Bhuvan AP cadastral survey layer — TMS format (flipY=true)
-// Source: NRSC Bhuvan platform (bhuvan-app1.nrsc.gov.in/bhuvan2d2.0/)
-const BHUVAN_AP_CAD =
-  "https://bhuvan-vec1.nrsc.gov.in/bhuvan/gwc/service/tms/1.0.0/cadastral:AP_Cad@EPSG:900913@png/{z}/{x}/{y}.png";
-
-// Bhuvan TG cadastral survey layer — TMS format
-const BHUVAN_TG_CAD =
-  "https://bhuvan-vec1.nrsc.gov.in/bhuvan/gwc/service/tms/1.0.0/cadastral:TG_Cad@EPSG:900913@png/{z}/{x}/{y}.png";
-
 interface LandMapProps {
-  mapRef: React.RefObject<MapView | null>;
+  mapRef: React.RefObject<any>;
+}
+
+export function animateToRegion(
+  mapRef: React.RefObject<any>,
+  region: {
+    latitude: number;
+    longitude: number;
+    latitudeDelta?: number;
+    longitudeDelta?: number;
+  }
+) {
+  mapRef.current?.injectJavaScript?.(`goToCoordinates(${region.latitude}, ${region.longitude});`);
 }
 
 export function LandMap({ mapRef }: LandMapProps) {
@@ -46,48 +48,63 @@ export function LandMap({ mapRef }: LandMapProps) {
   const [rulerMode, setRulerMode] = useState(false);
   const [rulerPoints, setRulerPoints] = useState<Coordinate[]>([]);
 
-  const handleMapPress = async (event: {
-    nativeEvent: { coordinate: { latitude: number; longitude: number } };
-  }) => {
-    const { latitude, longitude } = event.nativeEvent.coordinate;
-    if (rulerMode) {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setRulerPoints((prev) => [...prev, { latitude, longitude }]);
-      return;
-    }
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    dropPin(latitude, longitude);
-  };
+  // We will pass the webview reference to mapRef so parent can use injectJavaScript if needed
+  const webViewRef = useRef<WebView | null>(null);
 
-  const handleRegionChangeComplete = async (region: any) => {
-    setMapRegion(region);
-    if (mapRef.current) {
-      try {
-        const camera = await mapRef.current.getCamera();
-        setBearing(camera.heading || 0);
-      } catch {}
-    }
-  };
-
-  // Auto-zoom to ~level 17 when a pin is dropped so survey numbers are readable
   useEffect(() => {
-    if (droppedPin) {
-      mapRef.current?.animateToRegion(
-        {
-          latitude: droppedPin.lat,
-          longitude: droppedPin.lng,
-          latitudeDelta: 0.002,
-          longitudeDelta: 0.002,
-        },
-        800
-      );
+    if (mapRef) {
+      (mapRef as any).current = webViewRef.current;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [droppedPin?.lat, droppedPin?.lng]);
+  }, [mapRef]);
 
-  // Show Bhuvan cadastral overlay when zoomed in enough to read survey numbers
-  const cadastralVisible =
-    (showCadastral || mapType === "lines") && mapRegion.latitudeDelta < 0.05; // roughly zoom 14+
+  const handleWebViewMessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === "MAP_CLICK") {
+        const { latitude, longitude } = data;
+        if (rulerMode) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setRulerPoints((prev) => [...prev, { latitude, longitude }]);
+        } else {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          dropPin(latitude, longitude);
+        }
+      } else if (data.type === "MAP_REGION_CHANGE") {
+        setMapRegion(data.region);
+      }
+    } catch (err) {
+      console.error("WebView message parse error:", err);
+    }
+  };
+
+  // Sync state changes with WebView
+  useEffect(() => {
+    if (webViewRef.current) {
+      const settings = { mapType, showCadastral, surveyOpacity };
+      webViewRef.current.injectJavaScript(`updateMapSettings(${JSON.stringify(settings)});`);
+    }
+  }, [mapType, showCadastral, surveyOpacity]);
+
+  useEffect(() => {
+    if (webViewRef.current) {
+      webViewRef.current.injectJavaScript(`updateDroppedPin(${JSON.stringify(droppedPin)});`);
+      if (droppedPin) {
+        webViewRef.current.injectJavaScript(`goToCoordinates(${droppedPin.lat}, ${droppedPin.lng}, 17);`);
+      }
+    }
+  }, [droppedPin]);
+
+  useEffect(() => {
+    if (webViewRef.current) {
+      webViewRef.current.injectJavaScript(`updateRulerPoints(${JSON.stringify(rulerPoints)});`);
+    }
+  }, [rulerPoints]);
+
+  useEffect(() => {
+    if (webViewRef.current && userLocation) {
+      webViewRef.current.injectJavaScript(`updateUserLocation(${userLocation.latitude}, ${userLocation.longitude});`);
+    }
+  }, [userLocation]);
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -110,11 +127,7 @@ export function LandMap({ mapRef }: LandMapProps) {
         longitude: loc.coords.longitude,
       };
       setUserLocation(coords);
-      mapRef.current?.animateToRegion({
-        ...coords,
-        latitudeDelta: 0.005,
-        longitudeDelta: 0.005,
-      }, 800);
+      webViewRef.current?.injectJavaScript(`goToCoordinates(${coords.latitude}, ${coords.longitude}, 16);`);
     } catch (err) {
       console.error(err);
     }
@@ -126,18 +139,14 @@ export function LandMap({ mapRef }: LandMapProps) {
 
   const resetCompass = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (mapRef.current) {
-      mapRef.current.animateCamera({ heading: 0 }, { duration: 500 });
-      setBearing(0);
-    }
+    webViewRef.current?.injectJavaScript(`resetCompass();`);
+    setBearing(0);
   };
 
   // Calculate dynamic scale bar values (meters / kilometers) based on current zoom delta
   const getScaleData = () => {
     const { latitude, longitudeDelta } = mapRegion;
     const screenWidthMeters = longitudeDelta * 111320 * Math.cos((latitude * Math.PI) / 180);
-    
-    // Scale bar is 60 pixels wide
     const scaleWidthPixels = 60;
     const scaleMeters = screenWidthMeters * (scaleWidthPixels / 360);
     
@@ -151,117 +160,216 @@ export function LandMap({ mapRef }: LandMapProps) {
       lineWidth = (roundKm * 1000 / scaleMeters) * scaleWidthPixels;
     } else {
       const meters = Math.round(scaleMeters);
-      const roundM = meters >= 500 ? 500 : meters >= 200 ? 200 : meters >= 100 ? 100 : meters >= 50 ? 50 : meters >= 20 ? 20 : 10;
-      label = `${roundM} m`;
-      lineWidth = (roundM / scaleMeters) * scaleWidthPixels;
+      const roundMeters = meters >= 500 ? 500 : meters >= 200 ? 200 : meters >= 100 ? 100 : meters >= 50 ? 50 : meters >= 20 ? 20 : 10;
+      label = `${roundMeters} m`;
+      lineWidth = (roundMeters / scaleMeters) * scaleWidthPixels;
     }
     
-    if (lineWidth > 100) lineWidth = 100;
     if (lineWidth < 20) lineWidth = 20;
-    
     return { label, width: lineWidth };
   };
 
   const scaleData = getScaleData();
 
+  const leafletHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <style>
+        body, html, #map {
+          margin: 0; padding: 0; width: 100%; height: 100%;
+          background: #F4F2EE;
+        }
+        .leaflet-control-zoom {
+          display: none !important;
+        }
+        .leaflet-control-attribution {
+          font-size: 8px !important;
+        }
+      </style>
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    </head>
+    <body>
+      <div id="map"></div>
+      <script>
+        var TILE_LAYERS = {
+          standard: "https://tile.openstreetmap.de/{z}/{x}/{y}.png",
+          satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+          terrain: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+          dark: "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+          lines: "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+        };
+
+        var BHUVAN_AP_CAD = "https://bhuvan-vec1.nrsc.gov.in/bhuvan/gwc/service/tms/1.0.0/cadastral:AP_Cad@EPSG:900913@png/{z}/{x}/{y}.png";
+        var BHUVAN_TG_CAD = "https://bhuvan-vec1.nrsc.gov.in/bhuvan/gwc/service/tms/1.0.0/cadastral:TG_Cad@EPSG:900913@png/{z}/{x}/{y}.png";
+
+        var map = L.map('map', {
+          center: [16.5062, 80.648],
+          zoom: 8,
+          zoomControl: false
+        });
+
+        var activeBaseLayer = L.tileLayer(TILE_LAYERS.standard, { maxZoom: 19 }).addTo(map);
+
+        var apCadLayer = L.tileLayer(BHUVAN_AP_CAD, { tms: true, maxZoom: 19, opacity: 0.9 });
+        var tgCadLayer = L.tileLayer(BHUVAN_TG_CAD, { tms: true, maxZoom: 19, opacity: 0.9 });
+
+        var droppedPinMarker = null;
+        var userLocationMarker = null;
+        var rulerMarkersGroup = L.layerGroup().addTo(map);
+        var rulerLinesGroup = L.layerGroup().addTo(map);
+
+        map.on('click', function(e) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'MAP_CLICK',
+            latitude: e.latlng.lat,
+            longitude: e.latlng.lng
+          }));
+        });
+
+        map.on('moveend', function() {
+          var center = map.getCenter();
+          var zoom = map.getZoom();
+          var bounds = map.getBounds();
+          
+          var latDelta = bounds.getNorth() - bounds.getSouth();
+          var lngDelta = bounds.getEast() - bounds.getWest();
+
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'MAP_REGION_CHANGE',
+            region: {
+              latitude: center.lat,
+              longitude: center.lng,
+              latitudeDelta: latDelta,
+              longitudeDelta: lngDelta
+            }
+          }));
+        });
+
+        function updateMapSettings(settings) {
+          var mapType = settings.mapType || 'standard';
+          var showCadastral = settings.showCadastral;
+          var opacity = settings.surveyOpacity !== undefined ? settings.surveyOpacity : 0.9;
+
+          if (activeBaseLayer) {
+            map.removeLayer(activeBaseLayer);
+          }
+          if (mapType === 'lines') {
+            activeBaseLayer = L.tileLayer(TILE_LAYERS.lines, { maxZoom: 19 }).addTo(map);
+          } else {
+            activeBaseLayer = L.tileLayer(TILE_LAYERS[mapType] || TILE_LAYERS.standard, { maxZoom: 19 }).addTo(map);
+          }
+
+          var zoom = map.getZoom();
+          var isZoomedIn = zoom >= 13;
+          var showOverlay = (showCadastral || mapType === 'lines') && isZoomedIn;
+
+          if (showOverlay) {
+            apCadLayer.setOpacity(opacity).addTo(map);
+            tgCadLayer.setOpacity(opacity).addTo(map);
+          } else {
+            map.removeLayer(apCadLayer);
+            map.removeLayer(tgCadLayer);
+          }
+        }
+
+        map.on('zoomend', function() {
+          var zoom = map.getZoom();
+          var isZoomedIn = zoom >= 13;
+        });
+
+        function updateDroppedPin(pin) {
+          if (droppedPinMarker) {
+            map.removeLayer(droppedPinMarker);
+            droppedPinMarker = null;
+          }
+          if (pin && pin.lat && pin.lng) {
+            droppedPinMarker = L.marker([pin.lat, pin.lng]).addTo(map);
+          }
+        }
+
+        function updateUserLocation(lat, lng) {
+          if (userLocationMarker) {
+            map.removeLayer(userLocationMarker);
+            userLocationMarker = null;
+          }
+          if (lat && lng) {
+            userLocationMarker = L.circleMarker([lat, lng], {
+              radius: 7,
+              fillColor: '#3B82F6',
+              color: '#FFFFFF',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 1
+            }).addTo(map);
+          }
+        }
+
+        function goToCoordinates(lat, lng, zoom) {
+          map.flyTo([lat, lng], zoom || 17, { duration: 1.2 });
+        }
+
+        function resetCompass() {
+        }
+
+        function updateRulerPoints(points) {
+          rulerMarkersGroup.clearLayers();
+          rulerLinesGroup.clearLayers();
+
+          if (!points || points.length === 0) return;
+
+          var latlngs = [];
+          points.forEach(function(pt) {
+            var latlng = [pt.latitude, pt.longitude];
+            latlngs.push(latlng);
+
+            L.circleMarker(latlng, {
+              radius: 6,
+              fillColor: '#F59E0B',
+              color: '#FFFFFF',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 1
+            }).addTo(rulerMarkersGroup);
+          });
+
+          if (latlngs.length >= 2) {
+            L.polyline(latlngs, {
+              color: '#F59E0B',
+              weight: 3,
+              dashArray: '6, 6'
+            }).addTo(rulerLinesGroup);
+          }
+
+          if (latlngs.length >= 3) {
+            L.polygon(latlngs, {
+              color: '#F59E0B',
+              weight: 1,
+              fillColor: '#F59E0B',
+              fillOpacity: 0.15
+            }).addTo(rulerLinesGroup);
+          }
+        }
+      </script>
+    </body>
+    </html>
+  `;
+
   return (
     <View style={StyleSheet.absoluteFill}>
-      <MapView
-        ref={mapRef}
+      <WebView
+        ref={webViewRef}
         style={StyleSheet.absoluteFill}
-        initialRegion={mapRegion}
-        onRegionChangeComplete={handleRegionChangeComplete}
-        onPress={handleMapPress}
-        showsUserLocation
-        showsMyLocationButton={false}
-        showsCompass={false}
-        showsScale={false}
-        mapType={
-          mapType === "standard"
-            ? "standard"
-            : mapType === "satellite"
-            ? "satellite"
-            : mapType === "terrain"
-            ? "terrain"
-            : "none"
-        }
-        userInterfaceStyle={mapType === "dark" ? "dark" : "light"}
-        {...{ showsUserHeading: true } as any}
-      >
-        {/* Base Tile Layer for custom map types */}
-        {(mapType === "dark" || mapType === "lines") && (
-          <UrlTile
-            urlTemplate={
-              mapType === "dark"
-                ? "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
-                : "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-            }
-            maximumZ={19}
-            flipY={false}
-            tileSize={256}
-          />
-        )}
-
-        {/* Cadastral Layer */}
-        {cadastralVisible && (
-          <>
-            <UrlTile
-              urlTemplate={BHUVAN_AP_CAD}
-              maximumZ={19}
-              minimumZ={13}
-              flipY={true}
-              tileSize={256}
-              opacity={surveyOpacity}
-            />
-            <UrlTile
-              urlTemplate={BHUVAN_TG_CAD}
-              maximumZ={19}
-              minimumZ={13}
-              flipY={true}
-              tileSize={256}
-              opacity={surveyOpacity}
-            />
-          </>
-        )}
-
-        {droppedPin && !rulerMode && (
-          <Marker
-            coordinate={{
-              latitude: droppedPin.lat,
-              longitude: droppedPin.lng,
-            }}
-            pinColor="#1E3E72"
-          />
-        )}
-
-        {/* Ruler Mode Drawing Layers */}
-        {rulerPoints.map((pt, idx) => (
-          <Marker
-            key={`ruler-node-${idx}`}
-            coordinate={{ latitude: pt.latitude, longitude: pt.longitude }}
-            title={`Node ${idx + 1}`}
-            pinColor={colors.accent}
-          />
-        ))}
-
-        {rulerPoints.length >= 2 && (
-          <Polyline
-            coordinates={rulerPoints.map(p => ({ latitude: p.latitude, longitude: p.longitude }))}
-            strokeColor={colors.accent}
-            strokeWidth={3}
-            lineDashPattern={[6, 6]}
-          />
-        )}
-
-        {rulerPoints.length >= 3 && (
-          <Polygon
-            coordinates={rulerPoints.map(p => ({ latitude: p.latitude, longitude: p.longitude }))}
-            strokeColor={colors.accent}
-            strokeWidth={1}
-            fillColor={colors.accent + "25"}
-          />
-        )}
-      </MapView>
+        originWhitelist={["*"]}
+        source={{ html: leafletHTML }}
+        javaScriptEnabled
+        domStorageEnabled
+        onMessage={handleWebViewMessage}
+        geolocationEnabled
+      />
 
       {/* Dynamic scale bar */}
       <View style={styles.scaleBar}>
@@ -478,23 +586,17 @@ export function LandMap({ mapRef }: LandMapProps) {
                 <Pressable
                   onPress={async () => {
                     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setRulerMode(false);
                     setRulerPoints([]);
+                    setRulerMode(false);
                   }}
                   hitSlop={8}
                 >
-                  <Ionicons name="close-circle" size={18} color={colors.mutedForeground} />
+                  <Ionicons name="close" size={16} color={colors.mutedForeground} />
                 </Pressable>
               </View>
 
               <Text style={[styles.rulerHelpText, { color: colors.mutedForeground }]}>
-                {rulerPoints.length === 0
-                  ? "Tap map to measure distance and land area"
-                  : rulerPoints.length === 1
-                  ? "Tap another point to draw a line"
-                  : rulerPoints.length === 2
-                  ? "Add a 3rd point to calculate area"
-                  : "Tap points to expand measured boundary"}
+                Tap on the map to add nodes and calculate path distance and enclosed area.
               </Text>
 
               {rulerPoints.length > 0 && (
@@ -574,23 +676,11 @@ export function LandMap({ mapRef }: LandMapProps) {
   );
 }
 
-export function animateToRegion(
-  mapRef: React.RefObject<MapView | null>,
-  region: {
-    latitude: number;
-    longitude: number;
-    latitudeDelta: number;
-    longitudeDelta: number;
-  }
-) {
-  mapRef.current?.animateToRegion(region, 600);
-}
-
 const styles = StyleSheet.create({
   floatingContainer: {
     position: "absolute",
     right: 14,
-    top: 90, // Positioned safely below the top title bar
+    top: 90,
     zIndex: 1001,
     alignItems: "center",
   },
@@ -732,12 +822,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_500Medium",
   },
-  // Ruler card styles
   rulerCard: {
     position: "absolute",
     left: 14,
     right: 14,
-    bottom: 95, // Above bottom nav bar offset (75px) with padding
+    bottom: 95,
     borderRadius: 16,
     borderWidth: 1.5,
     padding: 14,
@@ -818,4 +907,3 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
   },
 });
-

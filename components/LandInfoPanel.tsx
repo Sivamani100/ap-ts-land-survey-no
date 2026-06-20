@@ -438,43 +438,66 @@ export function LandInfoPanel() {
               onChangeText={setCustomNotes}
               placeholder="Add details/notes"
             />
+
+            <View style={[styles.disclaimerInfoCard, { backgroundColor: colors.warning + "0B", borderColor: colors.warning + "25" }]}>
+              <View style={styles.disclaimerInfoHeader}>
+                <Ionicons name="shield-outline" size={14} color={colors.warning} />
+                <Text style={[styles.disclaimerInfoTitle, { color: colors.warning }]}>
+                  Data Source &amp; Affiliation
+                </Text>
+              </View>
+              <Text style={[styles.disclaimerInfoText, { color: colors.foreground }]}>
+                Data Source: <Text style={{ fontFamily: "Inter_600SemiBold" }}>Bhuvan (NRSC/ISRO)</Text>
+              </Text>
+              <Text style={[styles.disclaimerInfoText, { color: colors.mutedForeground, marginTop: 4 }]}>
+                This application is not affiliated with any Government entity. Please verify all records through official government portals.
+              </Text>
+            </View>
           </>
         )}
       </ScrollView>
 
       {isDone && record && (
-        <View style={styles.actions}>
-          <Pressable
-            onPress={handleMeeBhoomi}
-            style={({ pressed }) => [
-              styles.meebhoomiBtn,
-              {
-                backgroundColor: pressed
-                  ? colors.primary + "CC"
-                  : colors.primary,
-                flex: 1,
-              },
-            ]}
-          >
-            <Ionicons name="open-outline" size={15} color="#fff" />
-            <Text style={styles.actionBtnText}>
-              {record.state?.toLowerCase() === "telangana" ? "Open Dharani" : "Open MeeBhoomi"}
+        <View style={styles.actionsContainer}>
+          <View style={styles.portalDisclaimerRow}>
+            <Ionicons name="information-circle-outline" size={12} color={colors.mutedForeground} style={{ marginRight: 4 }} />
+            <Text style={[styles.portalDisclaimerText, { color: colors.mutedForeground }]} numberOfLines={1}>
+              Please verify all records through official government portals.
             </Text>
-          </Pressable>
-          <Pressable
-            onPress={handleSave}
-            style={({ pressed }) => [
-              styles.saveBtn,
-              {
-                backgroundColor: pressed
-                  ? colors.muted
-                  : colors.card,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Ionicons name={saved ? "bookmark" : "bookmark-outline"} size={15} color={colors.primary} />
-          </Pressable>
+          </View>
+          <View style={styles.actions}>
+            <Pressable
+              onPress={handleMeeBhoomi}
+              style={({ pressed }) => [
+                styles.meebhoomiBtn,
+                {
+                  backgroundColor: pressed
+                    ? colors.primary + "CC"
+                    : colors.primary,
+                  flex: 1,
+                },
+              ]}
+            >
+              <Ionicons name="open-outline" size={15} color="#fff" />
+              <Text style={styles.actionBtnText}>
+                {record.state?.toLowerCase() === "telangana" ? "Open Dharani" : "Open MeeBhoomi"}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={handleSave}
+              style={({ pressed }) => [
+                styles.saveBtn,
+                {
+                  backgroundColor: pressed
+                    ? colors.muted
+                    : colors.card,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Ionicons name={saved ? "bookmark" : "bookmark-outline"} size={15} color={colors.primary} />
+            </Pressable>
+          </View>
         </View>
       )}
 
@@ -608,12 +631,25 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     lineHeight: 18,
   },
-  actions: {
-    flexDirection: "row",
-    gap: 8,
+  actionsContainer: {
     marginHorizontal: 12,
     marginBottom: 12,
     marginTop: 4,
+    gap: 6,
+  },
+  portalDisclaimerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  portalDisclaimerText: {
+    fontSize: 10.5,
+    fontFamily: "Inter_500Medium",
+  },
+  actions: {
+    flexDirection: "row",
+    gap: 8,
   },
   meebhoomiBtn: {
     flexDirection: "row",
@@ -686,5 +722,27 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     fontFamily: "Inter_400Regular",
     lineHeight: 15,
+  },
+  disclaimerInfoCard: {
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 12,
+    gap: 4,
+  },
+  disclaimerInfoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 2,
+  },
+  disclaimerInfoTitle: {
+    fontSize: 12,
+    fontFamily: "Inter_700Bold",
+  },
+  disclaimerInfoText: {
+    fontSize: 11.5,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 16,
   },
 });

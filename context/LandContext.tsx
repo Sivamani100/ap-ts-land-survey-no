@@ -5,7 +5,12 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import type { Region } from "react-native-maps";
+export interface Region {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+}
 import { getAdminHierarchy } from "@/utils/overpass";
 import { reverseGeocode } from "@/utils/nominatim";
 import { getSurveyNo } from "@/utils/bhuvan";
